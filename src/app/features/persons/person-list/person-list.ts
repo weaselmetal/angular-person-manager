@@ -81,9 +81,30 @@ export class PersonList {
       return;
     }
 
-    this.personService.delete(person.id).subscribe(
-      () => this.loadData()
-    );
+    // a subscriber is always needed to send the actual request!
+    // subscribe() also accepts an object like:
+    // {
+    //   next: (responseObj) => ...,
+    //   error: (errorObj) => ...,
+    //   complete: () => {...}
+    // }
+    this.personService.delete(person.id).subscribe({
+      // success case
+      // 'res' is usually empty for DELETE, so we'd often ignore it: () => {}
+      next: (res) => {
+        console.log('Delete successful', res);
+        this.loadData();
+      },
+
+      // exception case
+      error: (err) => {
+        console.error('Error deleting person', err);
+      },
+
+      // relevant for continuous streams (e.g. websockets, data transfers) to signal
+      // 'no more data'. Has no arguments.
+      complete: () => {} 
+    });
   }
 
   loadData() {
