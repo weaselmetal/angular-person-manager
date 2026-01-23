@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
 
@@ -39,7 +39,14 @@ import { Person } from '../person';
     <div class="pagination">
       <button (click)="prevPage()" [disabled]="currentPage() === 1">Previous</button>
       <span>Page {{ currentPage() }}</span>
-      <button (click)="nextPage()" [disabled]="persons().length < pageSize">Next</button>
+      <button (click)="nextPage()" [disabled]="persons().length < pageSize()">Next</button>
+
+      per page:
+      <select #psSel [value]="pageSize()" (change)="changePageSize(psSel.value)" name="pageSize">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="40">40</option>
+      </select>
     </div>
   `,
   styles: `
@@ -65,14 +72,47 @@ import { Person } from '../person';
 })
 export class PersonList {
   private personService = inject(PersonService);
+  private router = inject(Router);
+  private activeRoute = inject(ActivatedRoute);
 
   // State
   persons = signal<Person[]>([]);
   currentPage = signal(1);
-  pageSize = 10;
+  pageSize = signal(10);
 
   constructor() {
-    this.loadData();
+    this.activeRoute.queryParams.subscribe(params => {
+      const pageFromUrl = this.parsePageParam(params['page']);
+      this.currentPage.set(pageFromUrl);
+
+      const sizeFromUrl = Number(params['pagesize']);
+      const validPageSize = (Number.isNaN(sizeFromUrl) || sizeFromUrl < 1) ? 10 : sizeFromUrl;
+      this.pageSize.set(validPageSize);
+
+      this.loadData();
+    });
+  }
+
+  /**
+   * Parses the passed String and returns a valid integer > 0.
+   * @param pageStr the 'page' param as found in the URL
+   * @returns 1 if NaN or negative, otherwise the floor of the passed number.
+   */
+  private parsePageParam(pageStr: any): number {
+    let page = 1;
+    if (!pageStr)
+      return page;
+   
+    page = Number(pageStr);
+    if (Number.isNaN(page) || page < 1)
+      return 1;
+
+    // page may be some float
+    return Math.floor(page);
+  }
+
+  changePageSize(newSize: string) {
+    this.goToPage(1, Number(newSize));
   }
 
   deletePerson(person: Person) {
@@ -108,19 +148,28 @@ export class PersonList {
   }
 
   loadData() {
-    this.personService.getPersons(this.currentPage(), this.pageSize)
+    this.personService.getPersons(this.currentPage(), this.pageSize())
       .subscribe(data => this.persons.set(data));
   }
 
+  private goToPage(page: number, pageSize: number) {
+    this.router.navigate([], {
+      relativeTo: this.activeRoute, // stay on current 'page' (route)
+      queryParams: { page: page, pagesize: pageSize },  // update the parameters
+      queryParamsHandling: 'merge' // 'merge' to leave all other params untouched
+    });
+  }
+
   nextPage() {
-    this.currentPage.update(p => p + 1);
-    this.loadData();
+    // by design, we don't update the currentPage signal here, since
+    // we subscribed to queryParam changes (in the constructor) and
+    // this is where we want the central place to change the currentPage
+    this.goToPage(this.currentPage() + 1, this.pageSize());
   }
 
   prevPage() {
     if (this.currentPage() > 1) {
-      this.currentPage.update(p => p - 1);
-      this.loadData();
+      this.goToPage(this.currentPage() - 1, this.pageSize())
     }
   }
 }
