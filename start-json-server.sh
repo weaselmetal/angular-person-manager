@@ -1,1 +1,1 @@
-npx json-server@0.17.4 db.json
+npm run start:json-server
