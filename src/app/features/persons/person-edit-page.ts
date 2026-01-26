@@ -19,6 +19,6 @@ export class PersonEditPage {
   id = input<string>();
 
   backToOverview() {
-    this.router.navigate(['/persons']);
+    this.router.navigate(['/persons'], { queryParamsHandling: "preserve" });
   }
 }

@@ -10,7 +10,7 @@ import { PersonFormTd } from "../person-form-td/person-form-td";
   template: `
     <h2>Person List</h2>
 
-    <a routerLink="/persons/new" class="btn">Create New Person</a>
+    <a routerLink="/persons/new" queryParamsHandling="preserve" class="btn">Create New Person</a>
 
     <table>
       <thead>
@@ -26,9 +26,9 @@ import { PersonFormTd } from "../person-form-td/person-form-td";
             <td>{{ person.name }}</td>
             <td>{{ person.age }}</td>
             <td class="actions">
-              <a [routerLink]="['/persons', person.id]">Details</a> |
-              <a [routerLink]="['/persons', person.id, 'edit']">Edit</a> |
-              <a [routerLink]="['/persons', person.id, 'edit-td']">Edit TD</a> |
+              <a [routerLink]="['/persons', person.id]" queryParamsHandling="preserve">Details</a> |
+              <a [routerLink]="['/persons', person.id, 'edit']" queryParamsHandling="preserve">Edit</a> |
+              <a [routerLink]="['/persons', person.id, 'edit-td']" queryParamsHandling="preserve">Edit TD</a> |
               <button (click)="openModal(person.id)">Modal Edit</button>
               <button (click)="deletePerson(person)" class="btn-delete">Delete</button>
             </td>

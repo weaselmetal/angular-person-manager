@@ -33,7 +33,7 @@ import { Person } from '../person';
 
       <div class="actions">
         <button type="submit" [disabled]="form.invalid">Save</button>
-        <a routerLink="/persons" class="btn-cancel">Cancel</a>
+        <a routerLink="/persons" queryParamsHandling="preserve" class="btn-cancel">Cancel</a>
       </div>
 
     </form>
@@ -94,14 +94,14 @@ export class PersonForm {
       const personToUpdate: Person = { ...formData, id: this.currentId };
       
       this.service.update(personToUpdate).subscribe(() => {
-        this.router.navigate(['/persons']);
+        this.router.navigate(['/persons'], { queryParamsHandling: "preserve" });
       });
 
     } else {
       // CREATE logic
       // The service expects Omit<Person, 'id'>, which matches our formData exactly.
       this.service.create(formData).subscribe(() => {
-        this.router.navigate(['/persons']);
+        this.router.navigate(['/persons'], { queryParamsHandling: "preserve" });
       });
     }
   }
