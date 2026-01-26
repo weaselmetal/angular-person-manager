@@ -93,7 +93,7 @@ export class PersonForm {
       // We need to reconstruct the Person object with the ID, as the form does not contain it.
       const personToUpdate: Person = { ...formData, id: this.currentId };
       
-      this.service.update(this.currentId, personToUpdate).subscribe(() => {
+      this.service.update(personToUpdate).subscribe(() => {
         this.router.navigate(['/persons']);
       });
 

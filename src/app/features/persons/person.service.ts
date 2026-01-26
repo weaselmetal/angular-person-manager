@@ -23,8 +23,8 @@ export class PersonService {
     return this.http.post<Person>(this.apiUrl, person);
   }
 
-  update(id: string, person: Person): Observable<Person> {
-    return this.http.put<Person>(`${this.apiUrl}/${id}`, person);
+  update(person: Person): Observable<Person> {
+    return this.http.put<Person>(`${this.apiUrl}/${person.id}`, person);
   }
 
   // delete cannot return just void
