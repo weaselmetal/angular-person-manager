@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Person } from './person';
+import { environment } from '../../../environments/environment'; // it's crucial to NOT have a specific configuration mentioned here!
 
 @Injectable({
   providedIn: 'root'
 })
 export class PersonService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/persons';
+  private apiUrl = environment.apiUrl;
 
   getPersons(page: number, limit: number): Observable<Person[]> {
     // HttpParams allows custom URL encoding and complex conditional chaining.
