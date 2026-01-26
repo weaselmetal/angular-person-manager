@@ -25,8 +25,9 @@ import { Person } from '../person';
             <td>{{ person.name }}</td>
             <td>{{ person.age }}</td>
             <td class="actions">
-              <a [routerLink]="['/persons', person.id]">Details</a>
-              <a [routerLink]="['/persons', person.id, 'edit']">Edit</a>
+              <a [routerLink]="['/persons', person.id]">Details</a> |
+              <a [routerLink]="['/persons', person.id, 'edit']">Edit</a> |
+              <a [routerLink]="['/persons', person.id, 'edit-td']">Edit TD</a>
               <button (click)="deletePerson(person)" class="btn-delete">Delete</button>
             </td>
           </tr>
