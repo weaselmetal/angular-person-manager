@@ -1,8 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
+import { PersonNavigator } from '../person-navigator';
 
 @Component({
   selector: 'app-person-form',
@@ -51,7 +52,7 @@ export class PersonForm {
   private fb = inject(FormBuilder);
   private service = inject(PersonService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private personNavigator = inject(PersonNavigator);
 
   // Signal to track if we are editing an existing person or creating a new one
   isEditMode = signal(false);
@@ -94,14 +95,14 @@ export class PersonForm {
       const personToUpdate: Person = { ...formData, id: this.currentId };
       
       this.service.update(personToUpdate).subscribe(() => {
-        this.router.navigate(['/persons'], { queryParamsHandling: "preserve" });
+        this.personNavigator.toPersonList();
       });
 
     } else {
       // CREATE logic
       // The service expects Omit<Person, 'id'>, which matches our formData exactly.
       this.service.create(formData).subscribe(() => {
-        this.router.navigate(['/persons'], { queryParamsHandling: "preserve" });
+        this.personNavigator.toPersonList();
       });
     }
   }
