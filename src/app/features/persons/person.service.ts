@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Person } from './person';
 
@@ -11,7 +11,13 @@ export class PersonService {
   private apiUrl = 'http://localhost:3000/persons';
 
   getPersons(page: number, limit: number): Observable<Person[]> {
-    const params = { _page: page, _limit: limit };
+    // HttpParams allows custom URL encoding and complex conditional chaining.
+    const params = new HttpParams()
+      .set("_page", page)
+      .set("_limit", limit);
+
+    // if none of the possibilities is needed, this is fine too
+    // const params = { _page: page, _limit: limit };
     return this.http.get<Person[]>(this.apiUrl, { params });
   }
 
