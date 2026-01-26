@@ -1,11 +1,12 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
+import { PersonFormTd } from "../person-form-td/person-form-td";
 
 @Component({
   selector: 'app-person-list',
-  imports: [RouterLink],
+  imports: [RouterLink, PersonFormTd],
   template: `
     <h2>Person List</h2>
 
@@ -27,7 +28,8 @@ import { Person } from '../person';
             <td class="actions">
               <a [routerLink]="['/persons', person.id]">Details</a> |
               <a [routerLink]="['/persons', person.id, 'edit']">Edit</a> |
-              <a [routerLink]="['/persons', person.id, 'edit-td']">Edit TD</a>
+              <a [routerLink]="['/persons', person.id, 'edit-td']">Edit TD</a> |
+              <button (click)="openModal(person.id)">Modal Edit</button>
               <button (click)="deletePerson(person)" class="btn-delete">Delete</button>
             </td>
           </tr>
@@ -49,6 +51,10 @@ import { Person } from '../person';
         <option value="40">40</option>
       </select>
     </div>
+
+    <dialog #editPersonModal>
+      <app-person-form-td [id]="clickedPersonId()" (finish)="closeModal()" />
+    </dialog>
   `,
   styles: `
     table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
@@ -80,6 +86,9 @@ export class PersonList {
   persons = signal<Person[]>([]);
   currentPage = signal(1);
   pageSize = signal(10);
+  clickedPersonId = signal<string | undefined>(undefined);
+
+  @ViewChild('editPersonModal') modal!: ElementRef<HTMLDialogElement>; 
 
   constructor() {
     this.activeRoute.queryParams.subscribe(params => {
@@ -92,6 +101,16 @@ export class PersonList {
 
       this.loadData();
     });
+  }
+
+  openModal(id: string) {
+    this.clickedPersonId.set(id);
+    this.modal.nativeElement.showModal();
+  }
+
+  closeModal() {
+    this.modal.nativeElement.close();
+    this.loadData();
   }
 
   /**
