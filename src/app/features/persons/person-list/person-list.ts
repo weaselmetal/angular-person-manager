@@ -1,8 +1,9 @@
-import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
 import { PersonFormTd } from "../person-form-td/person-form-td";
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-person-list',
@@ -81,6 +82,7 @@ export class PersonList {
   private personService = inject(PersonService);
   private router = inject(Router);
   private activeRoute = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   // State
   persons = signal<Person[]>([]);
@@ -91,16 +93,20 @@ export class PersonList {
   @ViewChild('editPersonModal') modal!: ElementRef<HTMLDialogElement>; 
 
   constructor() {
-    this.activeRoute.queryParams.subscribe(params => {
-      const pageFromUrl = this.parsePageParam(params['page']);
-      this.currentPage.set(pageFromUrl);
+    this.activeRoute.queryParams
+      // Angular kills subscriptions on ActiveRoute.things automatically,
+      // so we wouldn't have to do it ourselves in this case. No harm in doing it anyway.
+      .pipe(takeUntilDestroyed(this.destroyRef)) 
+      .subscribe(params => {
+        const pageFromUrl = this.parsePageParam(params['page']);
+        this.currentPage.set(pageFromUrl);
 
-      const sizeFromUrl = Number(params['pagesize']);
-      const validPageSize = (Number.isNaN(sizeFromUrl) || sizeFromUrl < 1) ? 10 : sizeFromUrl;
-      this.pageSize.set(validPageSize);
+        const sizeFromUrl = Number(params['pagesize']);
+        const validPageSize = (Number.isNaN(sizeFromUrl) || sizeFromUrl < 1) ? 10 : sizeFromUrl;
+        this.pageSize.set(validPageSize);
 
-      this.loadData();
-    });
+        this.loadData();
+      });
   }
 
   openModal(id: string) {
@@ -148,27 +154,30 @@ export class PersonList {
     //   error: (errorObj) => ...,
     //   complete: () => {...}
     // }
-    this.personService.delete(person.id).subscribe({
-      // success case
-      // 'res' is usually empty for DELETE, so we'd often ignore it: () => {}
-      next: (res) => {
-        console.log('Delete successful', res);
-        this.loadData();
-      },
+    this.personService.delete(person.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        // success case
+        // 'res' is usually empty for DELETE, so we'd often ignore it: () => {}
+        next: (res) => {
+          console.log('Delete successful', res);
+          this.loadData();
+        },
 
-      // exception case
-      error: (err) => {
-        console.error('Error deleting person', err);
-      },
+        // exception case
+        error: (err) => {
+          console.error('Error deleting person', err);
+        },
 
-      // relevant for continuous streams (e.g. websockets, data transfers) to signal
-      // 'no more data'. Has no arguments.
-      complete: () => {} 
-    });
+        // relevant for continuous streams (e.g. websockets, data (file) transfers) to signal
+        // 'no more data'. Has no arguments.
+        complete: () => {} 
+      });
   }
 
   loadData() {
     this.personService.getPersons(this.currentPage(), this.pageSize())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(data => this.persons.set(data));
   }
 

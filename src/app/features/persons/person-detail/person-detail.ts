@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-person-detail',
@@ -44,9 +45,12 @@ export class PersonDetail {
 
     // 2. load person if we have an ID
     if (id) {
-      this.service.getPerson(id).subscribe(data => {
-        this.person.set(data);
-      });
+      this.service.getPerson(id)
+        // here we have the constructor context available
+        .pipe(takeUntilDestroyed())
+        .subscribe(data => {
+          this.person.set(data);
+        });
     }
   }
 }

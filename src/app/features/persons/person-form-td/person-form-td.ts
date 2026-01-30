@@ -1,8 +1,9 @@
-import { Component, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { JsonPipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-person-form-td',
@@ -86,6 +87,8 @@ export class PersonFormTd {
   // Emits when work is done (save or cancel) so the parent can decide what to do
   finish = output<void>();
 
+  destroyRef = inject(DestroyRef);
+
   // --- STATE ---
   
   // Default is false, because in "Create Mode" we don't need to load anything.
@@ -104,15 +107,21 @@ export class PersonFormTd {
         // EDIT MODE: ID found, start loading
         this.personLoaded.set(false);
         
-        this.service.getPerson(currentId).subscribe({
-          next: (p) => {
-            this.person.set(p);
-            this.personLoaded.set(true);
-          },
-          error: (err) => {
-            console.error('Failed to load person', err);
-            this.personLoaded.set(true);
-          }
+        this.service.getPerson(currentId)
+          // takeUntilDestroyed protects against component destruction (e.g. navigating away),
+          // BUT it does NOT cancel the previous request when id() changes quickly.
+          // For that, we would need 'onCleanup' or a switchMap-Stream approach.
+          // we are not directly in the constructor context here, so we need to pass a destroyRef
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (p) => {
+              this.person.set(p);
+              this.personLoaded.set(true);
+            },
+            error: (err) => {
+              console.error('Failed to load person', err);
+              this.personLoaded.set(true);
+            }
         });
       } else {
         // CREATE MODE: No ID, reset form to empty
@@ -131,17 +140,19 @@ export class PersonFormTd {
       // Decide whether to create or update based on ID existence
       const obs$ = p.id ? this.service.update(p) : this.service.create(p);
 
-      obs$.subscribe({
-        next: () => {
-          this.personLoaded.set(true);
-          // Notify parent (Router or Modal) that we are done
-          this.finish.emit(); 
-        },
-        error: (err) => {
-          console.error('Save failed', err);
-          this.personLoaded.set(true);
-        }
-      });
+      obs$
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.personLoaded.set(true);
+            // Notify parent (Router or Modal) that we are done
+            this.finish.emit(); 
+          },
+          error: (err) => {
+            console.error('Save failed', err);
+            this.personLoaded.set(true);
+          }
+        });
     }
   }
 

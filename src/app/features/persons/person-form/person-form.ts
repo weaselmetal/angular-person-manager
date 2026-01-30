@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
 import { PersonNavigator } from '../person-navigator';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-person-form',
@@ -53,6 +54,7 @@ export class PersonForm {
   private service = inject(PersonService);
   private route = inject(ActivatedRoute);
   private personNavigator = inject(PersonNavigator);
+  private destroyRef = inject(DestroyRef);
 
   // Signal to track if we are editing an existing person or creating a new one
   isEditMode = signal(false);
@@ -76,10 +78,13 @@ export class PersonForm {
       this.currentId = id;
 
       // Load data and populate the form
-      this.service.getPerson(id).subscribe(person => {
-        // patchValue automatically maps object properties to form controls by name
-        this.form.patchValue(person);
-      });
+      this.service.getPerson(id)
+        // we wouldn't have to pass a destroyRef here, but we need it anyway for other places
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(person => {
+          // patchValue automatically maps object properties to form controls by name
+          this.form.patchValue(person);
+        });
     }
   }
 
@@ -94,16 +99,16 @@ export class PersonForm {
       // We need to reconstruct the Person object with the ID, as the form does not contain it.
       const personToUpdate: Person = { ...formData, id: this.currentId };
       
-      this.service.update(personToUpdate).subscribe(() => {
-        this.personNavigator.toPersonList();
-      });
+      this.service.update(personToUpdate)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => { this.personNavigator.toPersonList(); });
 
     } else {
       // CREATE logic
       // The service expects Omit<Person, 'id'>, which matches our formData exactly.
-      this.service.create(formData).subscribe(() => {
-        this.personNavigator.toPersonList();
-      });
+      this.service.create(formData)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => { this.personNavigator.toPersonList(); });
     }
   }
 }
