@@ -4,6 +4,7 @@ import { PersonService } from '../person.service';
 import { Person } from '../person';
 import { PersonFormTd } from "../person-form-td/person-form-td";
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-person-list',
@@ -53,6 +54,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       </select>
     </div>
 
+    @if (isLoading()) {
+      <p>... loading persons ...</p>
+    }
+
     <dialog #editPersonModal>
       <app-person-form-td [id]="clickedPersonId()" (finish)="closeModal()" />
     </dialog>
@@ -88,24 +93,61 @@ export class PersonList {
   persons = signal<Person[]>([]);
   currentPage = signal(1);
   pageSize = signal(10);
+  isLoading= signal(false);
   clickedPersonId = signal<string | undefined>(undefined);
 
   @ViewChild('editPersonModal') modal!: ElementRef<HTMLDialogElement>; 
 
   constructor() {
     this.activeRoute.queryParams
-      // Angular kills subscriptions on ActiveRoute.things automatically,
-      // so we wouldn't have to do it ourselves in this case. No harm in doing it anyway.
-      .pipe(takeUntilDestroyed(this.destroyRef)) 
-      .subscribe(params => {
-        const pageFromUrl = this.parsePageParam(params['page']);
-        this.currentPage.set(pageFromUrl);
+      .pipe(
 
-        const sizeFromUrl = Number(params['pagesize']);
-        const validPageSize = (Number.isNaN(sizeFromUrl) || sizeFromUrl < 1) ? 10 : sizeFromUrl;
-        this.pageSize.set(validPageSize);
+        // the order of actions taken in this pipeline is to be chosen by 
+        // the programmer and will be executed as written
 
-        this.loadData();
+        // always makes sense
+        takeUntilDestroyed(this.destroyRef),
+
+        // we 'wire-tap' (listen to) the stream.
+        // allows us to perform side-effects (like updating signals) 
+        // without affecting the data stream itself. Although one could do something like:
+        // params['page'] = 3; ONE SHOULD NOT!
+        tap(params => {
+          console.log('URL params changed, updating signals');
+          const page = this.parsePageParam(params['page']);
+          this.currentPage.set(page);
+
+          // show loading info
+          this.isLoading.set(true);
+          
+          const sizeFromUrl = Number(params['pagesize']);
+          const validSize = (Number.isNaN(sizeFromUrl) || sizeFromUrl < 1) ? 10 : sizeFromUrl;
+          this.pageSize.set(validSize);
+        }),
+
+        // switchMap unsubscribes from the previous observable (cancelling the pending request in this case,
+        // more: https://angular.dev/guide/http/making-requests#http-observables).
+        // switchMap also subscribes automatically to the Observable we return!
+        switchMap(() => {
+          console.log('starting new request (cancelling previous if still running)');
+          return this.personService.getPersons(this.currentPage(), this.pageSize());
+        })
+      )
+      // we define the subscription handling only once, when the constructor is called.
+      // the handling of the subscription gets active, whenever activeRoute.queryParams change.
+      // through switchMap, we deal with the events of the personService.getPersons() observable
+      // in the body of the following subscribe:
+      .subscribe({
+        next: (data) => {
+          console.log('new data arrived');
+          this.persons.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          // also upon errors the loading is done
+          console.error('API call encountered an error!', err);
+          this.isLoading.set(false);
+        }
       });
   }
 
@@ -115,6 +157,7 @@ export class PersonList {
   }
 
   closeModal() {
+    // data may have changed, so we reload the list's data
     this.modal.nativeElement.close();
     this.loadData();
   }
@@ -171,7 +214,8 @@ export class PersonList {
 
         // relevant for continuous streams (e.g. websockets, data (file) transfers) to signal
         // 'no more data'. Has no arguments.
-        complete: () => {} 
+        complete: () => {}
+       
       });
   }
 
