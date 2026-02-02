@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "first-app": {
+    "person-manager-app": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -73,13 +73,13 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "first-app:build:production"
+              "buildTarget": "person-manager-app:build:production"
             },
             "development": {
-              "buildTarget": "first-app:build:development"
+              "buildTarget": "person-manager-app:build:development"
             },
             "custom": { 
-              "buildTarget": "first-app:build:custom"
+              "buildTarget": "person-manager-app:build:custom"
             }
           },
           "defaultConfiguration": "development"
