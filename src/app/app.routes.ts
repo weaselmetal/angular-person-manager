@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { Login } from './login/login';
+import { authGuard } from './auth-guard';
 
 export const routes: Routes = [
   {
@@ -8,6 +10,11 @@ export const routes: Routes = [
   },
   {
     path: 'persons',
+    canActivate: [authGuard],
     loadChildren: () => import('./features/persons/persons.routes').then(m => m.PERSON_ROUTES)
+  },
+  {
+    path: 'login',
+    component: Login
   }
 ];

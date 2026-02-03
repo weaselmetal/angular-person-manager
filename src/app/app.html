@@ -1,3 +1,8 @@
 <h1>Person manager</h1>
-
+@if (authService.isLoggedIn()) {
+    <div style="position: absolute; right: 0px;">
+        Logged in as: {{ authService.currentUser()?.name}}
+        <button (click)="authService.logout()">Log out</button>
+    </div>
+}
 <router-outlet />

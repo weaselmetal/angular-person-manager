@@ -5,6 +5,7 @@ import { Person } from '../person';
 import { PersonFormTd } from "../person-form-td/person-form-td";
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, tap } from 'rxjs/operators';
+import { AuthService } from '../../../auth-service';
 
 @Component({
   selector: 'app-person-list',
@@ -28,11 +29,14 @@ import { switchMap, tap } from 'rxjs/operators';
             <td>{{ person.name }}</td>
             <td>{{ person.age }}</td>
             <td class="actions">
-              <a [routerLink]="['/persons', person.id]" queryParamsHandling="preserve">Details</a> |
-              <a [routerLink]="['/persons', person.id, 'edit']" queryParamsHandling="preserve">Edit</a> |
-              <a [routerLink]="['/persons', person.id, 'edit-td']" queryParamsHandling="preserve">Edit TD</a> |
-              <button (click)="openModal(person.id)">Modal Edit</button>
-              <button (click)="deletePerson(person)" class="btn-delete">Delete</button>
+              <a [routerLink]="['/persons', person.id]" queryParamsHandling="preserve">Details</a>
+              @if (authService.isAdmin()) {
+                | 
+                <a [routerLink]="['/persons', person.id, 'edit']" queryParamsHandling="preserve">Edit</a> |
+                <a [routerLink]="['/persons', person.id, 'edit-td']" queryParamsHandling="preserve">Edit TD</a> |
+                <button (click)="openModal(person.id)">Modal Edit</button>
+                <button (click)="deletePerson(person)" class="btn-delete">Delete</button>
+              }
             </td>
           </tr>
         } @empty {
@@ -88,6 +92,7 @@ export class PersonList {
   private router = inject(Router);
   private activeRoute = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
+  authService = inject(AuthService);
 
   // State
   persons = signal<Person[]>([]);
