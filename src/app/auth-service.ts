@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, timer } from 'rxjs'; 
+import { NotificationService } from './core/notification-service';
 
 export type UserRole = 'ADMIN' | 'READER';
 
@@ -17,8 +18,10 @@ export interface AuthDetails {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private router = inject(Router);
+  private notificationService = inject(NotificationService);
 
   // user will stay logged in for 1h (= 60m x 60s x 1000ms)
+  // normally the server would give us this information
   private readonly SESSION_DURATION = 1000 * 60 * 60;
 
   private readonly AUTH_DETAILS_STORAGE_KEY = 'authDetails';
@@ -112,7 +115,7 @@ export class AuthService {
     // RxJS Timer: Waits for 'expirationDuration' ms, then emits once.
     // there's an overload of the timer function that takes a JS Date.
     this.authTimerSub = timer(expirationTime).subscribe(() => {
-      console.log('Session expired -> Auto Logout');
+      this.notificationService.showWarning('Your session expired and you are logged out now.')
       this.logout();
     });
   }
