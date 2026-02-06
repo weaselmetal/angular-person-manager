@@ -57,7 +57,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         <br>
           
         <button type="submit" [disabled]="personForm.invalid">Save</button> 
-        <button (click)="onCancel()">Cancel</button>
+        <button (click)="onCancel()" type="button">Cancel</button>
 
       </form>
     } @else {
