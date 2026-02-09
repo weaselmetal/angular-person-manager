@@ -9,6 +9,7 @@ import { NotificationService } from './core/notification-service';
  */
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
+  const notificationService = inject(NotificationService);
   const router = inject(Router);
 
   // Check the Signal from AuthService
@@ -16,8 +17,7 @@ export const authGuard: CanActivateFn = () => {
     return true; // Access granted
   }
 
-  // Optional: You could show a toaster/alert here
-  // alert("You need to be logged in.");
+  notificationService.showWarning('Please log in');
 
   // Not logged in? Redirect to /login
   // We return a UrlTree, which tells the Router to cancel the current navigation
