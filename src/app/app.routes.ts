@@ -11,6 +11,9 @@ export const routes: Routes = [
   {
     path: 'persons',
     canActivate: [authGuard],
+    // with loadChildren, all the components referred to in persons.routes
+    // get loaded in one aggregated chunk, but ONLY WHEN the user navigates
+    // to some /persons/* route
     loadChildren: () => import('./features/persons/persons.routes').then(m => m.PERSON_ROUTES)
   },
   {

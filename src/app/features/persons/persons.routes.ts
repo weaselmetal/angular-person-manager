@@ -23,7 +23,9 @@ export const PERSON_ROUTES: Routes = [
   {
     path: ':id/edit-td',
     canActivate: [adminGuard],
-    component: PersonEditPage
+    // when using loadComponent, the necessary code (chunk) for 
+    // this component is only loaded when the user navigates to this route
+    loadComponent: () => import('./person-edit-page').then(m => m.PersonEditPage)
   },
   {
     path: ':id',
