@@ -6,44 +6,49 @@ import { PersonFormTd } from "../person-form-td/person-form-td";
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, tap } from 'rxjs/operators';
 import { AuthService } from '../../../auth-service';
+import { DummyDeferMap } from "../../../dummy-defer-map/dummy-defer-map";
 
 @Component({
   selector: 'app-person-list',
-  imports: [RouterLink, PersonFormTd],
+  imports: [RouterLink, PersonFormTd, DummyDeferMap],
   template: `
     <h2>Person List</h2>
 
     <a routerLink="/persons/new" queryParamsHandling="preserve" class="btn">Create New Person</a>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Age</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (person of persons(); track person.id) {
+    <div style="min-height: 500px;">
+
+      <table>
+        <thead>
           <tr>
-            <td>{{ person.name }}</td>
-            <td>{{ person.age }}</td>
-            <td class="actions">
-              <a [routerLink]="['/persons', person.id]" queryParamsHandling="preserve">Details</a>
-              @if (authService.isAdmin()) {
-                | 
-                <a [routerLink]="['/persons', person.id, 'edit']" queryParamsHandling="preserve">Edit</a> |
-                <a [routerLink]="['/persons', person.id, 'edit-td']" queryParamsHandling="preserve">Edit TD</a> |
-                <button (click)="openModal(person.id)">Modal Edit</button>
-                <button (click)="deletePerson(person)" class="btn-delete">Delete</button>
-              }
-            </td>
+            <th>Name</th>
+            <th>Age</th>
+            <th>Actions</th>
           </tr>
-        } @empty {
-          <tr><td colspan="3">No persons found</td></tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (person of persons(); track person.id) {
+            <tr>
+              <td>{{ person.name }}</td>
+              <td>{{ person.age }}</td>
+              <td class="actions">
+                <a [routerLink]="['/persons', person.id]" queryParamsHandling="preserve">Details</a>
+                @if (authService.isAdmin()) {
+                  | 
+                  <a [routerLink]="['/persons', person.id, 'edit']" queryParamsHandling="preserve">Edit</a> |
+                  <a [routerLink]="['/persons', person.id, 'edit-td']" queryParamsHandling="preserve">Edit TD</a> |
+                  <button (click)="openModal(person.id)">Modal Edit</button>
+                  <button (click)="deletePerson(person)" class="btn-delete">Delete</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="3">No persons found</td></tr>
+          }
+        </tbody>
+      </table>
+
+    </div>
 
     <div class="pagination">
       <button (click)="prevPage()" [disabled]="currentPage() === 1">Previous</button>
@@ -65,6 +70,22 @@ import { AuthService } from '../../../auth-service';
     <dialog #editPersonModal>
       <app-person-form-td [id]="clickedPersonId()" (finish)="closeModal()" />
     </dialog>
+
+    @defer (on viewport) {
+      <app-dummy-defer-map></app-dummy-defer-map>
+    } @placeholder {
+      <div style="height: 300px; background: #eee; display: flex; center; align-items: center; justify-content: center;">
+        If you can read this, I'm in the viewport.
+        Content can be visible for 2s, if the network is slow.
+      </div>
+    } @loading (after 2000ms; minimum 5s) { 
+      <div style="height: 300px; background: #eee; display: flex; center; align-items: center; justify-content: center;">
+        To avoid flickering, loading content is shown only after 2s (the after value).
+        In the meantime, the placeholder content is shown.
+        With fast Internet, chances are you won't see placeholder content.
+      </div>
+    }
+
   `,
   styles: `
     table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
