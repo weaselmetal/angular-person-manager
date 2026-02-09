@@ -6,47 +6,96 @@ import { Person } from '../person';
 import { PersonNavigator } from '../person-navigator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+// --- MATERIAL IMPORTS ---
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon'; // Optional, für Icons
+
 @Component({
   selector: 'app-person-form',
-  // ReactiveFormsModule is required for formGroup and formControlName
-  imports: [ReactiveFormsModule, RouterLink],
+  standalone: true,
+  
+  // import required Material Modules for the template
+  imports: [
+    ReactiveFormsModule, 
+    RouterLink,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule
+  ],
   template: `
-    <h2>{{ isEditMode() ? 'Edit Person' : 'Create New Person' }}</h2>
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          {{ isEditMode() ? 'Person bearbeiten' : 'Neue Person erstellen' }}
+        </mat-card-title>
+      </mat-card-header>
 
-    <form [formGroup]="form" (ngSubmit)="save()">
-      
-      <div class="form-group">
-        <label for="name">Name</label>
-        <input id="name" type="text" formControlName="name" />
-        
-        @if (form.controls.name.invalid && form.controls.name.touched) {
-          <div class="error">Name is required.</div>
-        }
-      </div>
+      <mat-card-content>
+        <form [formGroup]="form" (ngSubmit)="save()" class="person-form">
+          
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" placeholder="Max Mustermann">
+            
+            <mat-icon matSuffix>person</mat-icon>
 
-      <div class="form-group">
-        <label for="age">Age</label>
-        <input id="age" type="number" formControlName="age" />
-        
-        @if (form.controls.age.invalid && form.controls.age.touched) {
-          <div class="error">Age is required and must be valid.</div>
-        }
-      </div>
+            <mat-error>Name ist erforderlich</mat-error>
+          </mat-form-field>
 
-      <div class="actions">
-        <button type="submit" [disabled]="form.invalid">Save</button>
-        <a routerLink="/persons" queryParamsHandling="preserve" class="btn-cancel">Cancel</a>
-      </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Alter</mat-label>
+            <input matInput type="number" formControlName="age" placeholder="30">
+            
+            <mat-error>
+              @if (form.controls.age.hasError('required')) {
+                Alter ist erforderlich
+              } @else if (form.controls.age.hasError('min')) {
+                Zu jung!
+              } @else if (form.controls.age.hasError('max')) {
+                Zu alt!
+              }
+            </mat-error>
+          </mat-form-field>
 
-    </form>
+          <div class="actions">
+            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+              Speichern
+            </button>
+            
+            <a mat-stroked-button routerLink="/persons" queryParamsHandling="preserve">
+              Abbrechen
+            </a>
+          </div>
+
+        </form>
+      </mat-card-content>
+    </mat-card>
   `,
   styles: `
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; margin-bottom: .5rem; }
-    input { padding: 8px; width: 100%; max-width: 300px; }
-    .error { color: red; font-size: 0.8rem; margin-top: 4px; }
-    .actions { display: flex; gap: 10px; margin-top: 20px; }
-    .btn-cancel { padding: 8px; text-decoration: none; color: black; border: 1px solid #ccc; background: #eee; }
+    .form-card {
+      max-width: 400px;
+      margin: 2rem auto; /* Zentriert die Karte */
+      padding: 1rem;
+    }
+
+    .person-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end; /* Buttons rechtsbündig */
+      gap: 10px;
+      margin-top: 1rem;
+    }
   `
 })
 export class PersonForm {
