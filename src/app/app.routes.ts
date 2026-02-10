@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 import { Login } from './login/login';
 import { authGuard } from './auth-guard';
+import { Home } from './home/home';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'persons',
-    pathMatch: 'full'
+    component: Home
   },
   {
     path: 'persons',

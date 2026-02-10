@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { Router, type CanActivateFn } from '@angular/router';
+import { ActivatedRoute, Router, type CanActivateFn } from '@angular/router';
 import { AuthService } from './auth-service';
 import { NotificationService } from './core/notification-service';
 
@@ -29,7 +29,7 @@ export const authGuard: CanActivateFn = () => {
  * Guard to ensure the user has ADMIN privileges.
  * If not, simply blocks the navigation (stays on the current page).
  */
-export const adminGuard: CanActivateFn = () => {
+export const adminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const notificationService = inject(NotificationService);
   const router = inject(Router);
@@ -39,11 +39,8 @@ export const adminGuard: CanActivateFn = () => {
   }
 
   // inform the user about the missing priviledge (i.e. role)
-  notificationService.showWarning('You have to be an "Admin" to use this page');
+  notificationService.showWarning(`Redirected from ${state.url} because you are not an "Admin"`);
   
-  // Return false cancels the navigation. The user stays where they are.
-  // return false; 
-
   // in case we try to open /persons/5/edit as a READER, return false; just
   // takes us to the app root (URL '/') which isn't helpful
   return router.createUrlTree(['/persons']);
