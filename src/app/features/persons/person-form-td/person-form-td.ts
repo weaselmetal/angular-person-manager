@@ -4,7 +4,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { UniverseAge } from "../../../core/universe-age";
+import { UniverseAge } from "../../../directives/universe-age";
 
 @Component({
   selector: 'app-person-form-td',
