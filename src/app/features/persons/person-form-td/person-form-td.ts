@@ -4,18 +4,25 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { PersonService } from '../person.service';
 import { Person } from '../person';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { UniverseAge } from "../../../core/universe-age";
 
 @Component({
   selector: 'app-person-form-td',
   standalone: true,
-  imports: [FormsModule, JsonPipe],
+  imports: [FormsModule, JsonPipe, UniverseAge],
   template: `
     <h2>Edit Person (Template-Driven)</h2>
 
     <pre>{{ person | json }}</pre>
 
     @if (personLoaded()) {
-      <form #personForm="ngForm" (ngSubmit)="onSubmit(personForm)">
+      <form #personForm="ngForm" (ngSubmit)="onSubmit(personForm)" appUniverseAge>
+
+        @if (personForm.hasError('universeAgeMismatch') && (personForm.touched || personForm.dirty)) {
+          <div style="border: 1px solid red; background-color: #ffe6e6; padding: 10px; margin-bottom: 15px; color: red;">
+            Being the universe, you must be 42.
+          </div>
+        }
         
         <div>
           <label>Name:</label>
