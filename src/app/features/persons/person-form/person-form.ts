@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { isPresent } from '../../../core/utils';
 import { Person } from '../person';
 import { PersonNavigator } from '../person-navigator';
 import { PersonService } from '../person.service';
@@ -191,15 +192,6 @@ export class PersonForm {
 //   }
 //   return null;
 // };
-
-/**
- * Check if the value is a well-defined
- * @param value to check
- * @returns false if null or undefined, else true
- */
-function isPresent(value: any): boolean {
-  return value !== null && value !== undefined
-}
 
 export const universeAgeValidator: ValidatorFn = (control) => {
   // retrieve the values
