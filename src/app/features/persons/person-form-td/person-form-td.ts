@@ -5,11 +5,14 @@ import { PersonService } from '../person.service';
 import { Person } from '../person';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UniverseAge } from "../../../directives/universe-age";
+import { BlueBg } from '../../../directives/blue-bg';
 
 @Component({
   selector: 'app-person-form-td',
   standalone: true,
-  imports: [FormsModule, JsonPipe, UniverseAge],
+  
+  // all it needs to get the directive going is to import it
+  imports: [FormsModule, JsonPipe, UniverseAge, BlueBg],
   template: `
     <h2>Edit Person (Template-Driven)</h2>
 
