@@ -1,17 +1,17 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { PersonService } from '../person.service';
 import { Person } from '../person';
 import { PersonNavigator } from '../person-navigator';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PersonService } from '../person.service';
 
 // --- MATERIAL IMPORTS ---
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon'; // Optional, für Icons
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-person-form',
@@ -53,14 +53,21 @@ import { MatIconModule } from '@angular/material/icon'; // Optional, für Icons
             
             <mat-error>
               @if (form.controls.age.hasError('required')) {
-                Alter ist erforderlich
+                Age is required
               } @else if (form.controls.age.hasError('min')) {
-                Zu jung!
+                You can't be younger than 0 years, Benjamin B.
               } @else if (form.controls.age.hasError('max')) {
-                Zu alt!
+                You are likely not that old.
               }
             </mat-error>
           </mat-form-field>
+
+          @if (form.hasError('universeAgeMismatch') && (form.touched || form.dirty)) {
+            <div style="color: var(--mat-sys-error); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+               <mat-icon>error</mat-icon>
+               <span>The universe is 42.</span>
+            </div>
+          }
 
           <div class="actions">
             <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
@@ -113,9 +120,12 @@ export class PersonForm {
   // nonNullable ensures that values are always of their type (e.g., string) and never undefined.
   // set initial values (when a new Person is created), and define validity criteria
   form = this.fb.nonNullable.group({
+    // one entry can look like this
+    // key: [ initial-value, synchronous-validators, (optional) async-validators ]
     name: ['', Validators.required],
     age: [0, [Validators.required, Validators.min(0), Validators.max(120)]]
-  });
+  }, 
+  { validators: universeAgeValidator });
 
   constructor() {
     // Check if an ID is present in the URL
@@ -138,7 +148,13 @@ export class PersonForm {
   }
 
   save() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      // we don't want to bother a user with errors right when loading the form.
+      // trying to store invalid data must cause a visible error,
+      // even when the form is untouched. So we 'touch' all form elements via code.
+      this.form.markAllAsTouched();
+      return;
+    }
 
     // Retrieve all values from the form (ignoring disabled states if any)
     const formData = this.form.getRawValue();
@@ -161,3 +177,46 @@ export class PersonForm {
     }
   }
 }
+
+// using explicit typing is not needed, but here's how
+// export const universeAgeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+//   const name = control.get('name')?.value as string;
+//   const age = control.get('age')?.value as number;
+//   if (!name || age === null || age === undefined) {
+//     return null;
+//   }
+//   const isUniverse = name.toLowerCase().includes('universe');
+//   if (isUniverse && age !== 42) {
+//     return { universeAgeMismatch: true };
+//   }
+//   return null;
+// };
+
+/**
+ * Check if the value is a well-defined
+ * @param value to check
+ * @returns false if null or undefined, else true
+ */
+function isPresent(value: any): boolean {
+  return value !== null && value !== undefined
+}
+
+export const universeAgeValidator: ValidatorFn = (control) => {
+  // retrieve the values
+  const name = control.get('name')?.value as string;
+  const age = control.get('age')?.value as number;
+
+  // we don't validate if either name or age is missing;
+  const hasName = isPresent(name);
+  const hasAge = isPresent(age);
+  if (!hasName || !hasAge) {
+    return null;
+  }
+
+  if (name.toLowerCase().includes('universe') && age !== 42) {
+    return { universeAgeMismatch: true };
+  }
+
+  // all good
+  return null;
+};
