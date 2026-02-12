@@ -6,13 +6,14 @@ import { Person } from '../person';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UniverseAge } from "../../../directives/universe-age";
 import { BlueBg } from '../../../directives/blue-bg';
+import { NameAvailability } from "../../../directives/name-availability";
 
 @Component({
   selector: 'app-person-form-td',
   standalone: true,
   
   // all it needs to get the directive going is to import it
-  imports: [FormsModule, JsonPipe, UniverseAge, BlueBg],
+  imports: [FormsModule, JsonPipe, UniverseAge, BlueBg, NameAvailability],
   template: `
     <h2>Edit Person (Template-Driven)</h2>
 
@@ -26,7 +27,7 @@ import { BlueBg } from '../../../directives/blue-bg';
             Being the universe, you must be 42.
           </div>
         }
-        
+       
         <div>
           <label>Name:</label>
           <input 
@@ -36,13 +37,38 @@ import { BlueBg } from '../../../directives/blue-bg';
             required 
             minlength="3"
             #nameInput="ngModel"
+            appNameAvailability
           >
-          
-          @if (nameInput.invalid && nameInput.touched) {
-            <div style="color: red">
-              Name is required (min 3 chars).
+
+          @if (nameInput.touched && nameInput.pending) {
+            <div class="status-pending">
+              ⏳ checking name availability
             </div>
           }
+
+          @if (nameInput.hasError('nameTaken') && !nameInput.pending) {
+            <div class="error-msg">
+              🚫 Name is already taken
+            </div>
+          }
+
+          @if (false) {
+            informing the user about an error doesn't work, because we would block a form submit, which is unintended
+            @if (nameInput.hasError('serverNameCheckImpossible')) {
+              <div class="error-msg">
+                🚫 Server-side name-check impossible. Name could be free or taken. Try at your own risk.
+              </div>
+            }
+          }
+
+          @if (nameInput.hasError('required') && nameInput.touched) {
+            <div class="error-msg">
+              Please enter a name
+            </div>
+          }
+          
+          <pre>Status: {{ nameInput.status }}</pre>
+
         </div>
 
         <div>

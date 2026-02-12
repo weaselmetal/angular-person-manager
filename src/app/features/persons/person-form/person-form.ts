@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { AsyncValidatorFn, FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { isPresent } from '../../../core/utils';
 import { Person } from '../person';
@@ -13,6 +13,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { catchError, map, of, tap } from 'rxjs';
+import { NotificationService } from '../../../core/notification-service';
 
 @Component({
   selector: 'app-person-form',
@@ -212,3 +214,44 @@ export const universeAgeValidator: ValidatorFn = (control) => {
   // all good
   return null;
 };
+
+/**
+ * Closure that is to be initialised with the two services it needs.
+ * The Closure remembers those agruments for later, when needed during execution of the Closure.
+ * Executing this Closure just needs an AbstractControl as argument, as is specified by AsyncValidatorFn.
+ */
+export function nameAvailabilityValidator(personService: PersonService, noficationService: NotificationService): AsyncValidatorFn {
+
+  return (control) => {
+    // no input is an available name
+    if (!isPresent(control.value) || control.value === '') {
+      return of(null);
+    }
+
+    return personService.isNameAvailable(control.value).pipe(
+      tap((isAvailable) => { console.log(`nameAvailabilityValidator got from service ${isAvailable}`) }),
+
+      // here we produce the error object when name is taken, { nameTaken: true }
+      map(isAvailable => (isAvailable ? null : { nameTaken: true })),
+
+      // this validator should only produce an error, when the name is taken.
+      // it should not respond with an error when the HTTP request failed!
+      // so an unexpected service error signals 'all good' (null) by design
+      catchError(() => { 
+        console.log('service ran into an error');
+        // throwError() is not expected here, it leads to an unhandled application error.
+        // So don't do this:
+        // return throwError(() => { serverNameCheckImpossible: true });
+        // If an error should be returned and cause something in the UI, then one would have to do it like that:
+        // return of({ serverNameCheckImpossible: true });
+        // Then the UI could then react to this error. However, the form turns invalid and cannot be submitted.
+        // In case of the service function running into an error, we want to ignore it (in this case),
+        // such that the form can be submitted.
+
+        // but using our nofificationService works to leave the form valid but inform the user!
+        noficationService.showWarning('Server-side name check impossible. Proceed at your own risk.');
+        return of(null);
+      })
+    );
+  }; 
+}
