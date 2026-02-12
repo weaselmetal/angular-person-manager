@@ -1,6 +1,6 @@
 import { Directive } from '@angular/core';
 import { AbstractControl, NG_VALIDATORS, ValidationErrors, Validator } from '@angular/forms';
-import { universeAgeValidator } from '../features/persons/person-form/person-form';
+import { universeAgeValidator } from '../validators/universe-age';
 
 @Directive({
   selector: '[appUniverseAge]',
