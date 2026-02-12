@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { AppNotification, NotificationService } from '../notification-service';
 
 @Component({
@@ -12,7 +12,8 @@ import { AppNotification, NotificationService } from '../notification-service';
       <div class="toast"
         [ngClass]="m.kind"
         [class.closing]="closingIds.has(m.id)"
-        (click)="closeToast(m)">
+        (click)="closeToast(m)"
+        (contextmenu)="closeToastDiscouraged(m, $event)">
         {{ m.text }}
       </div>
     }
@@ -81,12 +82,35 @@ export class Toast {
 
   // toast that were clicked and will be removed
   closingIds = new Set<number>();
-
+  
   closeToast(toast: AppNotification) {
     this.closingIds.add(toast.id);
     setTimeout(() => {
       this.notificationService.remove(toast);
       this.closingIds.delete(toast.id);
+    }, 300);
+  }
+  
+  closeToastDiscouraged(toast: AppNotification, event: MouseEvent) {
+    event.preventDefault(); // avoid the context menu!
+
+    // Disclaimer: Touching the DOM directly in TS is frowned upon!
+    
+    // Reason 1: Loss of state knowledge
+    // TS doesn't remember the changes on the manipulated element / DOM.
+    // In Angular, the DOM should always be a projection of the state, not the other way around.
+    
+    // Reason 2: SSR / Security, testibility
+    // This following crashes on Server-Side Rendering (SSR) because 'HTMLElement' doesn't exist there.
+    // Plus, direct DOM access bypasses Angular's security sanitization (XSS protection).
+
+    // The only upside: we save a few lines of code (no Set needed).
+    // Verdict: DON'T DO IT (unless you have a very specific reason and know the risks).
+
+    const clickedElement = event.currentTarget as HTMLElement;
+    clickedElement.classList.add('closing');
+    setTimeout(() => {
+      this.notificationService.remove(toast);
     }, 300);
   }
 }
