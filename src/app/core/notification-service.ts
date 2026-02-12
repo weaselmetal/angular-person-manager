@@ -1,37 +1,55 @@
 import { Injectable, signal } from '@angular/core';
 
+/**
+ * This notification kind will be added to the element's css class!
+ */
 export type NotificationKind = 'success' | 'warning' | 'error'; 
+
+export interface AppNotification {
+  id: number;
+  text: string;
+  kind: NotificationKind;
+}
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
 
-  private timeoutId: any;
+  // to identify a notification
+  private messageId = 0;
 
-  message = signal<string | null>(null);
-  kind = signal<NotificationKind>('success');
+  // using a simple array here because iterating over it with @for
+  // is super easy
+  messages = signal<AppNotification[]>([]);
+
+  private messageFactory(text: string, kind: NotificationKind): AppNotification {
+    return { id: ++this.messageId, text: text, kind: kind };
+  }
+
+  private addMessage(message: AppNotification) {
+    // using the spread operator to add a new message
+    this.messages.update(old => [...old, message]);
+  }
 
   showSuccess(text: string) {
-    this.kind.set('success');
-    this.message.set(text);
+    const m = this.messageFactory(text, 'success');
+    this.addMessage(m);
 
-    if (this.timeoutId)
-      clearTimeout(this.timeoutId);
-
-    // auto clear after 5s
-    this.timeoutId = setTimeout(() => { this.clear(); }, 5000);
+    // auto clear after success message after 5s
+    setTimeout(() => { this.remove(m); }, 15000);
   }
 
   showWarning(text: string) {
-    this.kind.set('warning');
-    this.message.set(text);
+    const m = this.messageFactory(text, 'warning');
+    this.addMessage(m);
   }
 
   showError(text: string) {
-    this.kind.set('error');
-    this.message.set(text);
+    const m = this.messageFactory(text, 'error');
+    this.addMessage(m);
   }
 
-  clear() {
-    this.message.set(null);
+  remove(message: AppNotification) {
+    // only keep the messages with a different id
+    this.messages.update(old => old.filter(i => i.id !== message.id));
   }
 }

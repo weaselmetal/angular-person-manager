@@ -1,44 +1,73 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService } from '../notification-service';
+import { AppNotification, NotificationService } from '../notification-service';
 
 @Component({
   selector: 'app-toast',
   standalone: true,
   imports: [CommonModule],
   template: `
-    @if (notifyService.message()) {
-      <div class="toast-container" [ngClass]="notifyService.kind()" (click)="notifyService.clear()">
-        {{ notifyService.message() }}
+  <div class='toast-container'>
+    @for (m of notificationService.messages(); track m.id) {
+      <div class="toast"
+        [ngClass]="m.kind"
+        [class.closing]="closingIds.has(m.id)"
+        (click)="closeToast(m)">
+        {{ m.text }}
       </div>
     }
+  </div>
   `,
   styles: [`
     .toast-container {
       position: fixed;
       bottom: 20px;
       right: 20px;
+      width: 300px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column; 
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
       color: white;
       background-color: #AAA;
       padding: 12px 24px;
       border-radius: 4px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      max-width: 200px;
-      z-index: 9999;
       cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       animation: slideIn 0.3s ease-out;
+      transition: all 0.3s ease-in-out;
+      max-height: 100px;
+      opacity: 1;
+      overflow: hidden;
+      pointer-events: auto;
     }
 
-    .toast-container.error {
+    .toast.error {
       background-color: #C00;
     }
 
-    .toast-container.warning {
+    .toast.warning {
       background-color: rgb(233, 159, 0);
     }
 
-    .toast-container.success {
+    .toast.success {
       background-color: rgb(16, 138, 0);
+    }
+
+    .toast.closing {
+      opacity: 0;
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-bottom: 0;
+      border: 0;
     }
 
     @keyframes slideIn {
@@ -48,5 +77,16 @@ import { NotificationService } from '../notification-service';
   `]
 })
 export class Toast {
-  notifyService = inject(NotificationService);
+  notificationService = inject(NotificationService);
+
+  // toast that were clicked and will be removed
+  closingIds = new Set<number>();
+
+  closeToast(toast: AppNotification) {
+    this.closingIds.add(toast.id);
+    setTimeout(() => {
+      this.notificationService.remove(toast);
+      this.closingIds.delete(toast.id);
+    }, 300);
+  }
 }
