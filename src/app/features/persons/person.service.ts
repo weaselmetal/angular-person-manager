@@ -40,8 +40,6 @@ export class PersonService {
   }
 
   isNameAvailable(name: string): Observable<boolean> {
-    
-    console.log(`personService.isNameAvailable ${name}`);
 
     // we simulate a backend call that has some delay,
     return timer(1500).pipe(
@@ -51,8 +49,6 @@ export class PersonService {
       // mergeMap doesn't signal there are multiple observables.
       mergeMap(() => {
         const lowerName = name.toLowerCase();
-
-        console.log(`delayed response simulation ${name}`);
 
         // error case
         if (lowerName.includes('error')) {

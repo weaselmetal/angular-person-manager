@@ -2,6 +2,15 @@ import { ValidatorFn } from "@angular/forms";
 import { isPresent } from "../core/utils";
 
 export const universeAgeValidator: ValidatorFn = (control) => {
+  if (control.pristine) {
+    return null;
+  }
+
+  // we don't debounce here. This client-side check is cheap and
+  // doesn't warrant the overhead of turning this sync validator
+  // into and async validator. we don't want to deal with the 
+  // async validator's state in this case.
+
   // retrieve the values
   const name = control.get('name')?.value as string;
   const age = control.get('age')?.value as number;

@@ -35,7 +35,6 @@ export class NameAvailability implements AsyncValidator {
   constructor() { }
 
   validate(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    console.log(`NameAvailabilityDirective ${control.value}`);
     return this.validator(control);
   }
 }
