@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { Login } from './login/login';
 import { authGuard } from './auth-guard';
 import { Home } from './home/home';
+import { RxjsMapping } from './core/rxjs-mapping/rxjs-mapping';
 
 export const routes: Routes = [
   {
@@ -19,5 +20,9 @@ export const routes: Routes = [
   {
     path: 'login',
     component: Login
+  },
+  {
+    path: 'rxjs',
+    component: RxjsMapping
   }
 ];

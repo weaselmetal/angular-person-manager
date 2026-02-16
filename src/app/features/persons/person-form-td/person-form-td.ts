@@ -1,12 +1,12 @@
-import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { JsonPipe } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
-import { PersonService } from '../person.service';
-import { Person } from '../person';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { UniverseAge } from "../../../directives/universe-age";
+import { FormsModule, NgForm } from '@angular/forms';
 import { BlueBg } from '../../../directives/blue-bg';
 import { NameAvailability } from "../../../directives/name-availability";
+import { UniverseAge } from "../../../directives/universe-age";
+import { Person } from '../person';
+import { PersonService } from '../person.service';
 
 @Component({
   selector: 'app-person-form-td',

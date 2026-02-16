@@ -11,6 +11,8 @@ import { AuthService } from "../auth-service";
       <nav>
         <a routerLink="/" routerLinkActive="activeHref" [routerLinkActiveOptions]="{exact: true}">Home</a>
 
+        <a routerLink="/rxjs" routerLinkActive="activeHref">RxJS</a>
+
         @if (authService.isLoggedIn()) {
           <a routerLink="/persons" routerLinkActive="activeHref">Persons</a>
           
