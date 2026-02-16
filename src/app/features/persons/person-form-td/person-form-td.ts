@@ -92,7 +92,7 @@ import { PersonService } from '../person.service';
 
         <br>
           
-        <button type="submit" [disabled]="personForm.invalid">Save</button> 
+        <button type="submit" [disabled]="personForm.invalid || personForm.pending">Save</button> 
         <button (click)="onCancel()" type="button">Cancel</button>
 
       </form>
