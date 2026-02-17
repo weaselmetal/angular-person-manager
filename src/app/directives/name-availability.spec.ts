@@ -7,9 +7,6 @@ import { PersonService } from '../features/persons/person.service';
 import { NameAvailability } from './name-availability';
 import { NotificationService } from '../core/notification-service';
 
-// Helper for Vitest: A simple promise-based sleep to avoid Zone.js dependencies (fakeAsync/tick)
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 // TestHost: A dummy component to host the directive and a form control within a real DOM context
 @Component({
   template: `<input type="text" [formControl]="control" appNameAvailability>`,
@@ -48,11 +45,19 @@ describe('NameAvailability Directive (Integration Test)', () => {
       ]
     }).compileComponents();
 
+    // enable vi to time-travel
+    vi.useFakeTimers();
+
     fixture = TestBed.createComponent(TestHostComponent);
     component = fixture.componentInstance;
 
-    // trigger the first rendeing
+    // trigger the first rendering (via ngOnInit)
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    // go back to real JS timing after every test
+    vi.useRealTimers();
   });
 
   it('should return { nameTaken: true } if name is "Voldemort"', async () => {
@@ -64,8 +69,14 @@ describe('NameAvailability Directive (Integration Test)', () => {
     // right after changing the input, its status should become PENDING
     expect(component.control.status).toBe('PENDING');
 
-    // wait for input debounce and the 10ms delay of the mock and some buffer
-    await sleep(400);
+    // go forward in time by 400ms, to skip debouncing delay and mock delay
+    vi.advanceTimersByTime(400);
+
+    // if the used mocks put any microtasks in the queue (e.g. returning a promise),
+    // moving forward in time would not resolve these microtasks automatically.
+    // To await the stable state (no more microtasks) is a good practice.
+    await fixture.whenStable();
+
     fixture.detectChanges();
 
     // we expect an error
@@ -74,12 +85,16 @@ describe('NameAvailability Directive (Integration Test)', () => {
   });
 
   it('should be valid if name is "Harry"', async () => {
+    vi.useFakeTimers();
+
     component.control.markAsDirty();
     component.control.setValue('Harry');
 
     expect(component.control.status).toBe('PENDING');
 
-    await sleep(400);
+    vi.advanceTimersByTime(400);
+    await fixture.whenStable();
+
     fixture.detectChanges();
 
     expect(component.control.errors).toBeNull();
